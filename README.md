@@ -1,66 +1,20 @@
 
-## What is Moquette?
+## Moquette的改进
 
-[![Build Status](https://api.travis-ci.org/andsel/moquette.svg?branch=master)](https://travis-ci.org/andsel/moquette)
+[![Build Status](https://github.com/irubant/moquette.svg?branch=master)](https://github.com/irubant/moquette)
 
-* [Documentation reference guide] (http://andsel.github.io/moquette/) Guide on how to use and configure Moquette
-* [Google Group] (https://groups.google.com/forum/#!forum/moquette-mqtt) Google Group to participate in development discussions.
-Moquette aims to be a MQTT compliant broker. The broker supports QoS 0, QoS 1 and QoS 2.
+* 对moquette的测试上改进了众多功能。
 
-Its designed to be evented, uses Netty for the protocol encoding and decoding part.
  
-## Embeddable
+## 改进
 
-[Freedomotic] (http://www.freedomotic.com/) Is an home automation framework, uses Moquette embedded to interface with MQTT world.
-Moquette is also used into [Atomize Spin] (http://atomizesoftware.com/spin) a software solution for the logistic field.
-Part of moquette are used into the [Vertx MQTT module] (https://github.com/giovibal/vertx-mqtt-broker-mod), into [MQTT spy](http://kamilfb.github.io/mqtt-spy/)
-and into [WSO2 Messge broker] (http://techexplosives-pamod.blogspot.it/2014/05/mqtt-transport-architecture-wso2-mb-3x.html).
-
-## 1 minute set up
-Start play with it, download the self distribution tar from [BinTray](https://bintray.com/artifact/download/andsel/generic/distribution-0.8-bundle-tar.tar.gz) ,
-the un untar and start the broker listening on 1883 port and enjoy! 
-```
-tar zxf distribution-0.8-bundle-tar.tar.gz
-cd bin
-./moquette.sh
-```
-
-Or if you are on Windows shell
-```
- cd bin
- .\moquette.bat
- ```
-
-## Embedding in other projects
-To embed Moquette in another maven project is sufficient to include a repository and declare the dependency: 
-
-```
-<repositories>
-  <repository>
-    <id>bintray</id>
-    <url>https://jcenter.bintray.com</url>
-    <releases>
-      <enabled>true</enabled>
-    </releases>
-    <snapshots>
-      <enabled>false</enabled>
-    </snapshots>
-  </repository>
-</repositories>
-```
-
-Include dependency in your project: 
-
-```
-<dependency>
-      <groupId>io.moquette</groupId>
-      <artifactId>moquette-broker</artifactId>
-      <version>0.10-SNAPSHOT</version>
-</dependency>
-```
-
-## Build from sources
-
-After a git clone of the repository, cd into the cloned sources and: `mvn clean package`. 
-In distribution/target directory will be produced the selfcontained tar for the broker with all dependencies and a running script. 
-  
+* 修改消息队列长度为32，避免了原来消息队列超过最大条数之后，publish出错的情况
+* 修改了storage的构造函数，使其更通用
+* 修改了每次都对clientId的判定，针对client首次链接的情况
+* 修改了离线消息签收时的空指针异常
+* 弃用了一些不常用的模块
+* 添加了redis存储实现
+		redis采用了现有conf配置机制
+		重新设计了session的存储结构，以便后续添加分片处理
+* 修改工程的结构，独立了common模块，同时将redis，mapdb，broker建在common基础上
+* 针对publish的内存泄漏，进行了修改，moquette未回收导致
