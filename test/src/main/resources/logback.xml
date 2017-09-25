@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="2 seconds">
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="rollingFile"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>logs/mqtt/test.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>logs/mqtt.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%msg%n
+			</pattern>
+		</encoder>
+		<maxFileSize>8 MB</maxFileSize>
+	</appender>
+
+	<logger name="com.ruban" level="DEBUG" />
+	<logger name="com.springframework.validation" level="DEBUG" />
+	
+	<!--log4jdbc -->
+	<logger name="jdbc.sqltiming" level="INFO" />
+
+	<root level="DEBUG">
+		<appender-ref ref="console" />
+		<appender-ref ref="rollingFile" />
+	</root>
+</configuration>

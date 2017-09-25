@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="2 seconds">
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>logs/moquette/moquette.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>logs/moquette/moquette.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%date{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</encoder>
+		<triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<maxFileSize>5MB</maxFileSize>
+		</triggeringPolicy>
+	</appender>
+
+	<logger name="io.moquette" level="DEBUG" />
+	<logger name="io.moquette.spi.impl.ProtocolProcessor" level="DEBUG" />
+	<logger name="io.moquette.spi.impl.ProtocolProcessorBootstrapper" level="DEBUG" />
+
+	<root level="DEBUG">
+		<appender-ref ref="console" />
+		<appender-ref ref="rollingFile" />
+	</root>
+</configuration>

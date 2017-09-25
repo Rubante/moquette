@@ -1,0 +1,82 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>io.moquette</groupId>
+	<artifactId>moquette-test</artifactId>
+	<packaging>jar</packaging>
+	<version>0.0.3-SNAPSHOT</version>
+	<name>mqttTest</name>
+	<url>http://maven.apache.org</url>
+	<dependencies>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.eclipse.paho</groupId>
+			<artifactId>mqtt-client</artifactId>
+			<version>0.4.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.ruban.framework</groupId>
+			<artifactId>ruban-core</artifactId>
+			<version>0.0.3-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+	<build>
+		<finalName>mqttTest</finalName>
+
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
+				<version>1.1.1</version>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>install</phase>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<repositoryLayout>flat</repositoryLayout>
+					<repositoryName>lib</repositoryName>
+					<configurationSourceDirectory>src/main/resources/</configurationSourceDirectory>
+					<!-- Set the target configuration directory to be used in the bin scripts -->
+					<configurationDirectory>conf</configurationDirectory>
+					<!-- Copy the contents from "/src/main/config" to the target configuration directory in the assembled application -->
+					<copyConfigurationDirectory>true</copyConfigurationDirectory>
+					<!-- Include the target configuration directory in the beginning of the classpath declaration in the bin scripts -->
+					<includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
+					<!-- prefix all bin files with "mycompany" -->
+					<binPrefix>startup</binPrefix>
+					<!-- set alternative assemble directory -->
+					<assembleDirectory>${project.build.directory}/Startup</assembleDirectory>
+					<!-- Extra JVM arguments that will be included in the bin scripts -->
+					<!-- Generate bin scripts for windows and unix pr default -->
+					<platforms>
+						<platform>windows</platform>
+						<platform>unix</platform>
+					</platforms>
+					<programs>
+						<program>
+							<mainClass>mqtt.Startup</mainClass>
+							<name>startup</name>
+						</program>
+					</programs>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
