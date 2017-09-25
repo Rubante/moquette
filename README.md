@@ -1,11 +1,10 @@
 
 ## Moquette的改进
 
-[![Build Status](https://github.com/irubant/moquette.svg?branch=master)](https://github.com/irubant/moquette)
+[![Build Status](https://api.travis-ci.org/andsel/moquette.svg?branch=master)](https://github.com/irubant/moquette)
 
 * 对moquette的测试上改进了众多功能。
 
- 
 ## 改进
 
 * 修改消息队列长度为32，避免了原来消息队列超过最大条数之后，publish出错的情况
