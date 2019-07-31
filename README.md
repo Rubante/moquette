@@ -21,10 +21,6 @@
 
 <p>经常会在项目中用到消息传递，在不同的场景下，消息传递的要求是不一样的。java世界中，jms的规范可遵循，同时也有开源的相关软件来支持。
 本文来说说一下mqtt，以及moquette。在选择mqtt的中间件时较为纠结，对于非大众化的开源框架的使用没有底气。好在有源码，研究源码，经过大量测试，效果还可以，推荐给大家。</p>
-  
-沟通交流群： 
-
- ![image](http://img.blog.csdn.net/20170916132004944?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvd2FuZ2luMTAxMw==/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
  
  经测试过程发现moquette存在一些问题，已修改，可能是认识的问题，也可能是出发点不一样。
  
