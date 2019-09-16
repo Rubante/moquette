@@ -112,6 +112,9 @@
         <module>broker</module>
         <module>distribution</module>
         <module>embedding_moquette</module>
+        <module>mapdb</module>
+        <module>redis_storage</module>
+        <module>test</module>
     </modules>
 
     <reporting>
