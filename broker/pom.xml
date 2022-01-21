@@ -83,7 +83,7 @@
 		<dependency>
 			<groupId>com.hazelcast</groupId>
 			<artifactId>hazelcast</artifactId>
-			<version>3.5.4</version>
+			<version>4.0.5</version>
 		</dependency>
 		
 		<!-- Test dependencies -->
