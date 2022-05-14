@@ -166,7 +166,7 @@ public class NettyAcceptor implements ServerAcceptor {
                         }
                     }
                 }).option(ChannelOption.SO_BACKLOG, nettySoBacklog).option(ChannelOption.SO_REUSEADDR, nettySoReuseaddr)
-                .option(ChannelOption.TCP_NODELAY, nettyTcpNodelay)
+                .childOption(ChannelOption.TCP_NODELAY, nettyTcpNodelay)
                 .childOption(ChannelOption.SO_KEEPALIVE, nettySoKeepalive);
         try {
             LOG.info("Binding server. host={}, port={}", host, port);
@@ -260,7 +260,7 @@ public class NettyAcceptor implements ServerAcceptor {
         final MoquetteIdleTimeoutHandler timeoutHandler = new MoquetteIdleTimeoutHandler();
         String host = props.getProperty(BrokerConstants.HOST_PROPERTY_NAME);
         String sNeedsClientAuth = props.getProperty(BrokerConstants.NEED_CLIENT_AUTH, "false");
-        final boolean needsClientAuth = Boolean.valueOf(sNeedsClientAuth);
+        final boolean needsClientAuth = Boolean.parseBoolean(sNeedsClientAuth);
         initFactory(host, sslPort, "SSL MQTT", new PipelineInitializer() {
 
             @Override
@@ -293,7 +293,7 @@ public class NettyAcceptor implements ServerAcceptor {
         final MoquetteIdleTimeoutHandler timeoutHandler = new MoquetteIdleTimeoutHandler();
         String host = props.getProperty(BrokerConstants.HOST_PROPERTY_NAME);
         String sNeedsClientAuth = props.getProperty(BrokerConstants.NEED_CLIENT_AUTH, "false");
-        final boolean needsClientAuth = Boolean.valueOf(sNeedsClientAuth);
+        final boolean needsClientAuth = Boolean.parseBoolean(sNeedsClientAuth);
         initFactory(host, sslPort, "Secure websocket", new PipelineInitializer() {
 
             @Override

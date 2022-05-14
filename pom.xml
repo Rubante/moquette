@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netty.version>4.1.14.Final</netty.version>
+        <netty.version>4.1.77.Final</netty.version>
         <source.version>1.8</source.version>
         <target.version>1.8</target.version>
         <bintray.repo>andsel/maven</bintray.repo>
@@ -112,6 +112,7 @@
         <module>broker</module>
         <module>distribution</module>
         <module>embedding_moquette</module>
+        <module>test</module>
     </modules>
 
     <reporting>
@@ -129,10 +130,11 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.0</version>
                 <configuration>
                     <source>${source.version}</source>
                     <target>${target.version}</target>
-					<compilerArgument>-g:none</compilerArgument>
+<!--					<compilerArgument>-g:none</compilerArgument>-->
                 </configuration>
             </plugin>
             <plugin>
