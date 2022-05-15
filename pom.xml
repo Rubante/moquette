@@ -58,9 +58,11 @@
     </scm>
 
     <modules>
-    	<module>moquette-common</module>
+        <module>moquette-common</module>
         <module>moquette-broker</module>
         <module>distribution</module>
+        <module>mapdb</module>
+        <module>redis_storage</module>
         <module>moquette-embedded-test</module>
         <module>test</module>
     </modules>
@@ -84,30 +86,30 @@
                 <configuration>
                     <source>${source.version}</source>
                     <target>${target.version}</target>
-<!--					<compilerArgument>-g:none</compilerArgument>-->
+                    <!--					<compilerArgument>-g:none</compilerArgument>-->
                 </configuration>
             </plugin>
             <plugin>
-              <groupId>org.apache.maven.plugins</groupId>
-              <artifactId>maven-checkstyle-plugin</artifactId>
-              <version>2.17</version>
-              <configuration>
-                  <configLocation>checkstyle.xml</configLocation>
-                  <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
-                  <!--
-                     <configLocation>/google_checks.xml</configLocation>
-                   -->
-                  <failOnViolation>true</failOnViolation>
-                  <consoleOutput>true</consoleOutput>
-              </configuration>
-              <executions>
-                <execution>
-                  <phase>validate</phase>
-                  <goals>
-                    <goal>check</goal>
-                  </goals>
-                </execution>
-              </executions>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.17</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                    <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+                    <!--
+                       <configLocation>/google_checks.xml</configLocation>
+                     -->
+                    <failOnViolation>true</failOnViolation>
+                    <consoleOutput>true</consoleOutput>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

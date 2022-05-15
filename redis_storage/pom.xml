@@ -8,7 +8,7 @@
         <version>0.10.8-SNAPSHOT</version>
     </parent>
 
-    <artifactId>moquette-redis-storage</artifactId>
+    <artifactId>redis_storage</artifactId>
     <packaging>jar</packaging>
     <name>Moquette - Redis storage</name>
 
@@ -48,15 +48,6 @@
             <artifactId>moquette-common</artifactId>
             <version>${project.version}</version>
         </dependency>
-        
-        <dependency>
-            <groupId>io.moquette</groupId>
-            <artifactId>moquette-common</artifactId>
-            <type>test-jar</type>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        
     </dependencies>
 
     <build>
@@ -73,23 +64,6 @@
             </plugin>
 
             <!-- Includes to generate OSGi headers -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.2</version>
-                <configuration>
-                    <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>test-jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
