@@ -26,19 +26,18 @@
             <artifactId>mqtt-client</artifactId>
             <version>0.4.0</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version>
+        </dependency>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.12</version>
+            <version>4.13.1</version>
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>com.ruban.framework</groupId>
-            <artifactId>ruban-core</artifactId>
-            <version>0.0.3-SNAPSHOT</version>
-        </dependency>
     </dependencies>
     <build>
         <finalName>mqttTest</finalName>
@@ -77,7 +76,7 @@
                     <!-- Include the target configuration directory in the beginning of the classpath declaration in the bin scripts -->
                     <includeConfigurationDirectoryInClasspath>true</includeConfigurationDirectoryInClasspath>
                     <!-- prefix all bin files with "mycompany" -->
-                    <binPrefix>startup</binPrefix>
+<!--                    <binPrefix>startup</binPrefix>-->
                     <!-- set alternative assemble directory -->
                     <assembleDirectory>${project.build.directory}/Startup</assembleDirectory>
                     <!-- Extra JVM arguments that will be included in the bin scripts -->
