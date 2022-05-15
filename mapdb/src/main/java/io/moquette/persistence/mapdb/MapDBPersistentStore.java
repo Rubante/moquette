@@ -53,7 +53,7 @@ public class MapDBPersistentStore implements IStore {
         this.m_autosaveInterval = Integer
                 .parseInt(props.getProperty(BrokerConstants.AUTOSAVE_INTERVAL_PROPERTY_NAME, "30"));
         this.m_scheduler = Executors.newScheduledThreadPool(1);
-       
+
         initStore();
     }
 
@@ -82,19 +82,15 @@ public class MapDBPersistentStore implements IStore {
                 LOG.warn("Using {} MapDB store file. Path={}", fileNewlyCreated ? "fresh" : "existing", m_storePath);
             } catch (IOException ex) {
                 LOG.error("Unable to open MapDB store file. Path={}, cause={}, errorMessage={}", m_storePath,
-                    ex.getCause(), ex.getMessage());
+                        ex.getCause(), ex.getMessage());
                 throw new RuntimeException("Can't create temp subscriptions file storage [" + m_storePath + "]", ex);
             }
             m_db = DBMaker.newFileDB(tmpFile).make();
         }
         LOG.info("Scheduling MapDB commit task");
-        m_scheduler.scheduleWithFixedDelay(new Runnable() {
-
-            @Override
-            public void run() {
-                LOG.debug("Committing to MapDB");
-                m_db.commit();
-            }
+        m_scheduler.scheduleWithFixedDelay(() -> {
+            LOG.debug("Committing to MapDB");
+            m_db.commit();
         }, this.m_autosaveInterval, this.m_autosaveInterval, TimeUnit.SECONDS);
 
         // TODO check m_db is valid and

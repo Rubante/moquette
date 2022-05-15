@@ -133,47 +133,44 @@ public class PublisherCallback implements MqttCallback {
 
     public void run() {
 
-        Runnable runnable = new Runnable() {
+        Runnable runnable = () -> {
+            try {
+                mqttClient.subscribe("wifi/lost");
 
-            @Override
-            public void run() {
-                try {
-                    mqttClient.subscribe("wifi/lost");
-
-                    int i = 0;
-                    int index = 10000;
-                    int client = 1;
-                    int count = 0;
-                    while (i < 10 * 60 * minute) {
-                        if (index > 11000) {
-                            index = 10000;
-                            count++;
+                int i = 0;
+                int index = 10000;
+                int client = 1;
+                int count = 0;
+                while (i < 10 * 60 * minute) {
+                    if (index > 11000) {
+                        index = 10000;
+                        count++;
+                    }
+                    if (count == 40) {
+                        client++;
+                        count = 0;
+                        if (client > 30) {
+                            client = 0;
                         }
-                        if (count == 40) {
-                            client++;
-                            count = 0;
-                            if (client > 30) {
-                                client = 0;
-                            }
-                        }
-
-                        Thread.sleep(100);
-                        // 消息
-                        String content = DateUtil.getNowDateTimeStr();
-                        MqttMessage message = new MqttMessage(content.getBytes());
-
-                        message.setQos(qos);
-                        mqttClient.publish("wifi/log/" + client + "-" + index, message);
-                        index++;
-                        i++;
                     }
 
-                } catch (MqttException ex) {
-                    ex.printStackTrace();
-                } catch (InterruptedException ex) {
-                    ex.printStackTrace();
+                    Thread.sleep(100);
+                    // 消息
+                    String content = DateUtil.getNowDateTimeStr();
+                    MqttMessage message = new MqttMessage(content.getBytes());
+
+                    message.setQos(qos);
+                    mqttClient.publish("wifi/log/" + client + "-" + index, message);
+                    index++;
+                    i++;
                 }
+
+            } catch (MqttException ex) {
+                ex.printStackTrace();
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
             }
+
         };
 
         new Thread(runnable).start();

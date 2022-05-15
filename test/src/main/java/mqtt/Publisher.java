@@ -19,10 +19,10 @@ public class Publisher {
 
     private static AtomicInteger counter = new AtomicInteger(0);
 
-    private static String ip = "tcp://172.16.32.14:1886";
-    // private static String ip = "tcp://localhost:1883";
+    //    private static String ip = "tcp://172.16.32.14:1886";
+    private static String ip = "tcp://localhost:1883";
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
         for (int i = 0; i < 1; i++) {
             Runnable thread = new Runnable() {
@@ -42,7 +42,7 @@ public class Publisher {
         }
     }
 
-    public static void connect(String clientId, int minute) {
+    public static void connect(String clientId, final int minute) {
 
         String broker = ip;
 
@@ -67,7 +67,6 @@ public class Publisher {
 
             new Thread(new Runnable() {
 
-                @Override
                 public void run() {
                     for (int i = 0; i < 6 * minute; i++) {
                         // 消息

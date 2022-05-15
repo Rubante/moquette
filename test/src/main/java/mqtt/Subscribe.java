@@ -20,7 +20,7 @@ public class Subscribe {
 
     //private static String ip = "tcp://172.16.32.14:1886";
     //private static String ip = "tcp://139.199.189.214:1883";
-    private static String ip = "tcp://localhost:1884";
+    private static String ip = "tcp://localhost:1883";
 
     public static void main(String[] args) {
         Subscribe subscribe = new Subscribe();
