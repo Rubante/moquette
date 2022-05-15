@@ -3,7 +3,15 @@
 
 [![Build Status](https://api.travis-ci.org/andsel/moquette.svg?branch=master)](https://github.com/irubant/moquette)
 
+## 一些注意事项
+* 启动类为io.moquette.server.Server
+* 启动需要加入jvm参数，如 -Dmoquette.path=D:\workspace-myself\moquette\moquette-broker
+* 基于JDK8
+* Publisher及Subscribe是可用于测试消息
 * 对moquette的测试上改进了众多功能。
+
+
+![下载](./doc/moquette-0.10.8.tar.gz)
 
 ## 改进
 
@@ -340,3 +348,8 @@ IP1的broker，总内存占用情况如下
 
 - 在心跳之间的时间段，测试发现存在broker误签收的情况。
 - 以上问题，在业务实际使用过程中，采取业务签收等方式，避免消息质量的不可靠性的出现。
+
+
+## 3.5 交流支持
+
+![image](./doc/concatpay.png)

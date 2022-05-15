@@ -2,6 +2,7 @@ Version 0.10.8-SNAPSHOT
     此版本号与moquette的版本号不再相关
     升级依赖jar的版本，解决依赖漏洞问题
     重新组织模块结构
+    修改支持JDK8的一些特性
 Version 0.10-wyj
 	修改消息队列长度为32，避免了原来消息队列超过最大条数之后，publish出错的情况
 	修改了storage的构造函数，使其更通用
