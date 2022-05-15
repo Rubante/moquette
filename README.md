@@ -10,8 +10,9 @@
 * Publisher及Subscribe是可用于测试消息
 * 对moquette的测试上改进了众多功能。
 
+打包后的zip包
 
-![下载](./doc/moquette-0.10.8.tar.gz)
+/doc/moquette-0.10.8.tar.gz
 
 ## 改进
 
@@ -352,4 +353,4 @@ IP1的broker，总内存占用情况如下
 
 ## 3.5 交流支持
 
-![image](./doc/concatpay.png)
+![image](https://img-blog.csdnimg.cn/0a42f54a12cb4edfaed8fa3d2c1f4aeb.png)
