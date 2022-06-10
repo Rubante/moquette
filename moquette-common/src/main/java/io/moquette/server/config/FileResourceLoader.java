@@ -61,10 +61,16 @@ public class FileResourceLoader implements IResourceLoader {
         return loadResource(new File(parentPath, relativePath));
     }
 
+    /**
+     * 加载配置文件
+     *
+     * @param f
+     * @return
+     */
     public Reader loadResource(File f) {
         LOG.info("Loading file. Path = {}.", f.getAbsolutePath());
         if (f.isDirectory()) {
-            LOG.error("The given file is a directory. Path = {}.", f.getAbsolutePath());
+            LOG.error("The given file is a directory，should be a file. Path = {}.", f.getAbsolutePath());
             throw new ResourceIsDirectoryException("File \"" + f + "\" is a directory!");
         }
         try {

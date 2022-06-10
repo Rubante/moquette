@@ -31,6 +31,9 @@ public abstract class IConfig {
 
     public abstract String getProperty(String name, String defaultValue);
 
+    /**
+     * 分配默认配置
+     */
     void assignDefaults() {
         setProperty(BrokerConstants.PORT_PROPERTY_NAME, Integer.toString(BrokerConstants.PORT));
         setProperty(BrokerConstants.HOST_PROPERTY_NAME, BrokerConstants.HOST);
