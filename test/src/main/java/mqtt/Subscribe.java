@@ -20,8 +20,9 @@ public class Subscribe {
 
     //private static String ip = "tcp://172.16.32.14:1886";
     //private static String ip = "tcp://139.199.189.214:1883";
-    private static String ip = "tcp://localhost:1883";
+    private static String ip = "tcp://39.102.113.135:1883";
 
+    //    private static String ip = "tcp://localhost:1883";
     public static void main(String[] args) {
         Subscribe subscribe = new Subscribe();
         subscribe.start("1");
@@ -29,7 +30,6 @@ public class Subscribe {
 
     /**
      * 启动
-     * 
      */
     private void start(String prefix) {
 

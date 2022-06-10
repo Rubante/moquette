@@ -50,13 +50,16 @@ public class Server {
 
     private ServerAcceptor m_acceptor;
 
-    private volatile boolean m_initialized;
+    /**
+     * 是否已经完成初始化
+     */
+    private volatile boolean initialized;
 
     // 协议处理器
-    private ProtocolProcessor m_processor;
+    private ProtocolProcessor processor;
 
     // 协议处理器加载器
-    private ProtocolProcessorBootstrapper m_processorBootstrapper;
+    private ProtocolProcessorBootstrapper processorBootstrapper;
 
     // 调度执行服务
     private ScheduledExecutorService scheduler;
@@ -64,29 +67,34 @@ public class Server {
     public static void main(String[] args) throws IOException {
         final Server server = new Server();
         server.startServer();
-        System.out.println("Server started, version 0.10.8-SNAPSHOT");
+        LOG.info(() -> "Server started, version 0.10.8-SNAPSHOT");
         // Bind a shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> server.stopServer()));
     }
 
     /**
-     * Starts Moquette bringing the configuration
-     * from the file located at
-     * m_config/moquette.conf
+     * 启动Moquette
+     * 使用m_config/moquette.conf的配置信息
      *
-     * @throws IOException in case of any IO error.
+     * @throws IOException IO异常.
      */
     public void startServer() throws IOException {
 
+        // 获取默认配置文件路径
         File defaultConfigurationFile = defaultConfigFile();
 
         LOG.info(() -> "Starting Moquette server. Configuration file path={}", defaultConfigurationFile.getAbsolutePath());
 
         IResourceLoader filesystemLoader = new FileResourceLoader(defaultConfigurationFile);
-        final IConfig config = new ResourceLoaderConfig(filesystemLoader);
+        IConfig config = new ResourceLoaderConfig(filesystemLoader);
         startServer(config);
     }
 
+    /**
+     * 默认配置文件，使用系统变量moquette.path获取配置文件的目录，目录默认为null
+     *
+     * @return
+     */
     private static File defaultConfigFile() {
         String configPath = System.getProperty("moquette.path", null);
         return new File(configPath, IConfig.DEFAULT_CONFIG);
@@ -104,7 +112,7 @@ public class Server {
         LOG.info(() -> "Starting Moquette server. Configuration file path={}", configFile.getAbsolutePath());
 
         IResourceLoader filesystemLoader = new FileResourceLoader(configFile);
-        final IConfig config = new ResourceLoaderConfig(filesystemLoader);
+        IConfig config = new ResourceLoaderConfig(filesystemLoader);
         startServer(config);
     }
 
@@ -167,15 +175,15 @@ public class Server {
 
         scheduler = Executors.newScheduledThreadPool(1);
 
-        final String handlerProp = System.getProperty(BrokerConstants.INTERCEPT_HANDLER_PROPERTY_NAME);
+        String handlerProp = System.getProperty(BrokerConstants.INTERCEPT_HANDLER_PROPERTY_NAME);
         if (handlerProp != null) {
             config.setProperty(BrokerConstants.INTERCEPT_HANDLER_PROPERTY_NAME, handlerProp);
         }
 
-        final String persistencePath = config.getProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME);
+        String persistencePath = config.getProperty(BrokerConstants.PERSISTENT_STORE_PROPERTY_NAME);
         LOG.info(() -> "Configuring Using persistent store file, path={}", persistencePath);
-        m_processorBootstrapper = new ProtocolProcessorBootstrapper();
-        final ProtocolProcessor processor = m_processorBootstrapper.init(config, handlers, authenticator, authorizator, this);
+        processorBootstrapper = new ProtocolProcessorBootstrapper();
+        ProtocolProcessor processor = processorBootstrapper.init(config, handlers, authenticator, authorizator, this);
         LOG.debug(() -> "Initialized MQTT protocol processor");
         if (sslCtxCreator == null) {
             LOG.info(() -> "Using default SSL context creator");
@@ -185,10 +193,10 @@ public class Server {
         LOG.info(() -> "Binding server to the configured ports");
         m_acceptor = new NettyAcceptor();
         m_acceptor.initialize(processor, config, sslCtxCreator);
-        m_processor = processor;
+        this.processor = processor;
 
         LOG.info(() -> "Moquette server has been initialized successfully");
-        m_initialized = true;
+        initialized = true;
     }
 
     /**
@@ -204,22 +212,22 @@ public class Server {
      */
     public void internalPublish(MqttPublishMessage msg, final String clientId) {
         final int messageID = msg.variableHeader().packetId();
-        if (!m_initialized) {
+        if (!initialized) {
             LOG.error(() -> "Moquette is not started, internal message cannot be published. CId={}, messageId={}", clientId, messageID);
             throw new IllegalStateException("Can't publish on a server is not yet started");
         }
 
         LOG.debug(() -> "Publishing message. CId={}, messageId={}", clientId, messageID);
 
-        m_processor.internalPublish(msg, clientId);
+        processor.internalPublish(msg, clientId);
     }
 
     public void stopServer() {
         LOG.info(() -> "Unbinding server from the configured ports");
         m_acceptor.close();
         LOG.trace(() -> "Stopping MQTT protocol processor");
-        m_processorBootstrapper.shutdown();
-        m_initialized = false;
+        processorBootstrapper.shutdown();
+        initialized = false;
         scheduler.shutdown();
 
         LOG.info(() -> "Moquette server has been stopped.");
@@ -233,10 +241,10 @@ public class Server {
      * @return list of subscriptions.
      */
     public List<Subscription> getSubscriptions() {
-        if (m_processorBootstrapper == null) {
+        if (processorBootstrapper == null) {
             return null;
         }
-        return m_processorBootstrapper.getSubscriptions();
+        return processorBootstrapper.getSubscriptions();
     }
 
     /**
@@ -246,12 +254,12 @@ public class Server {
      * @param interceptHandler the handler to add.
      */
     public void addInterceptHandler(InterceptHandler interceptHandler) {
-        if (!m_initialized) {
+        if (!initialized) {
             LOG.error(() -> "Moquette is not started, MQTT message interceptor cannot be added. InterceptorId={}", interceptHandler.getID());
             throw new IllegalStateException("Can't register interceptors on a server that is not yet started");
         }
         LOG.info(() -> "Adding MQTT message interceptor. InterceptorId={}", interceptHandler.getID());
-        m_processor.addInterceptHandler(interceptHandler);
+        processor.addInterceptHandler(interceptHandler);
     }
 
     /**
@@ -261,12 +269,12 @@ public class Server {
      * @param interceptHandler the handler to remove.
      */
     public void removeInterceptHandler(InterceptHandler interceptHandler) {
-        if (!m_initialized) {
+        if (!initialized) {
             LOG.error(() -> "Moquette is not started, MQTT message interceptor cannot be removed. InterceptorId={}", interceptHandler.getID());
             throw new IllegalStateException("Can't deregister interceptors from a server that is not yet started");
         }
         LOG.info(() -> "Removing MQTT message interceptor. InterceptorId={}", interceptHandler.getID());
-        m_processor.removeInterceptHandler(interceptHandler);
+        processor.removeInterceptHandler(interceptHandler);
     }
 
     /**
@@ -277,11 +285,11 @@ public class Server {
      * used bt the broker.
      */
     public IConnectionsManager getConnectionsManager() {
-        return m_processorBootstrapper.getConnectionDescriptors();
+        return processorBootstrapper.getConnectionDescriptors();
     }
 
     public ProtocolProcessor getProcessor() {
-        return m_processor;
+        return processor;
     }
 
     public ScheduledExecutorService getScheduler() {

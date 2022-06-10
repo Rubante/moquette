@@ -46,7 +46,7 @@ class Qos0PublishHandler extends QosPublishHandler {
 
     void receivedPublishQos0(Channel channel, MqttPublishMessage msg) {
         // verify if topic can be write
-        final Topic topic = new Topic(msg.variableHeader().topicName());
+        Topic topic = new Topic(msg.variableHeader().topicName());
         String clientID = NettyUtils.clientID(channel);
         String username = NettyUtils.userName(channel);
         if (!m_authorizator.canWrite(topic, username, clientID)) {

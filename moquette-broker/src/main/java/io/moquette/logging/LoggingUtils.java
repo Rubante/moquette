@@ -18,10 +18,21 @@ package io.moquette.logging;
 
 import java.util.ArrayList;
 import java.util.Collection;
+
 import io.moquette.interception.InterceptHandler;
 
+/**
+ * 日志工具类
+ */
 public final class LoggingUtils {
 
+    /**
+     * 获取拦截器的ID列表
+     *
+     * @param handlers
+     * @param <T>
+     * @return
+     */
     public static <T extends InterceptHandler> Collection<String> getInterceptorIds(Collection<T> handlers) {
         Collection<String> result = new ArrayList<>(handlers.size());
         for (T handler : handlers) {

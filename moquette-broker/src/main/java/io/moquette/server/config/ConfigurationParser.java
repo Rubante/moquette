@@ -29,16 +29,15 @@ import java.text.ParseException;
 import java.util.Properties;
 
 /**
- * Mosquitto configuration parser.
+ * Mosquitto 配置文件解析.
  * <p>
- * A line that at the very first has # is a comment Each line has key value format, where the
- * separator used it the space.
+ * 每行一开始带有#的是注释；每行都是key value的格式，分隔符用空格
  */
 class ConfigurationParser {
 
     private static final Logger LOG = LoggerFactory.getLogger(ConfigurationParser.class);
 
-    private Properties m_properties = new Properties();
+    private Properties properties = new Properties();
 
     /**
      * Parse the configuration from file.
@@ -49,29 +48,22 @@ class ConfigurationParser {
             return;
         }
         if (!file.exists()) {
-            LOG.warn(() ->
-                    String.format(
-                            "parsing not existing file %s, so fallback on default configuration!",
-                            file.getAbsolutePath()));
+            LOG.warn(() -> "parsing not existing file {}, so fallback on default configuration!", file.getAbsolutePath());
             return;
         }
         try {
             FileReader reader = new FileReader(file);
             parse(reader);
         } catch (FileNotFoundException fex) {
-            LOG.warn(() ->
-                            String.format(
-                                    "parsing not existing file %s, so fallback on default configuration!",
-                                    file.getAbsolutePath()),
-                    fex);
+            LOG.warn(() -> "parsing not existing file {}, so fallback on default configuration!", file.getAbsolutePath(), fex);
             return;
         }
     }
 
     /**
-     * Parse the configuration
+     * 解析配置文件
      *
-     * @throws ParseException if the format is not compliant.
+     * @throws ParseException 格式不兼容.
      */
     void parse(Reader reader) throws ParseException {
         if (reader == null) {
@@ -87,7 +79,7 @@ class ConfigurationParser {
                 int commentMarker = line.indexOf('#');
                 if (commentMarker != -1) {
                     if (commentMarker == 0) {
-                        // skip its a comment
+                        // 跳过注释
                         continue;
                     } else {
                         // it's a malformed comment
@@ -104,7 +96,7 @@ class ConfigurationParser {
                     String key = line.substring(0, delimiterIdx).trim();
                     String value = line.substring(delimiterIdx).trim();
 
-                    m_properties.put(key, value);
+                    properties.put(key, value);
                 }
             }
         } catch (IOException ex) {
@@ -119,6 +111,6 @@ class ConfigurationParser {
     }
 
     Properties getProperties() {
-        return m_properties;
+        return properties;
     }
 }

@@ -488,9 +488,14 @@ public class ProtocolProcessor {
         return pub;
     }
 
+    /**
+     * 处理发送过来的消息，分等级：至少一次，最多一次，只能一次
+     * @param channel
+     * @param msg
+     */
     public void processPublish(Channel channel, MqttPublishMessage msg) {
-        final MqttQoS qos = msg.fixedHeader().qosLevel();
-        final String clientId = NettyUtils.clientID(channel);
+        MqttQoS qos = msg.fixedHeader().qosLevel();
+        String clientId = NettyUtils.clientID(channel);
         LOG.info(() -> "Processing PUBLISH message. CId={}, topic={}, messageId={}, qos={}", clientId,
                 msg.variableHeader().topicName(), msg.variableHeader().packetId(), qos);
         switch (qos) {

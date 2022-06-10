@@ -21,11 +21,11 @@
 		</triggeringPolicy>
 	</appender>
 
-	<logger name="io.moquette" level="DEBUG" />
-	<logger name="io.moquette.spi.impl.ProtocolProcessor" level="DEBUG" />
-	<logger name="io.moquette.spi.impl.ProtocolProcessorBootstrapper" level="DEBUG" />
+	<logger name="io.moquette" level="INFO" />
+	<logger name="io.moquette.spi.impl.ProtocolProcessor" level="INFO" />
+	<logger name="io.moquette.spi.impl.ProtocolProcessorBootstrapper" level="INFO" />
 
-	<root level="DEBUG">
+	<root level="INFO">
 		<appender-ref ref="console" />
 		<appender-ref ref="rollingFile" />
 	</root>

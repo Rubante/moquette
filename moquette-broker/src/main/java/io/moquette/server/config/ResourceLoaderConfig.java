@@ -30,7 +30,7 @@ public class ResourceLoaderConfig extends IConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(ResourceLoaderConfig.class);
 
-    private final Properties m_properties;
+    private final Properties properties;
     private final IResourceLoader resourceLoader;
 
     public ResourceLoaderConfig(IResourceLoader resourceLoader) {
@@ -54,46 +54,40 @@ public class ResourceLoaderConfig extends IConfig {
         }
 
         if (configReader == null) {
-            LOG.error(() ->
-                            "The resource loader returned no configuration reader. ResourceLoader = {}, configName = {}.",
-                    resourceLoader.getName(),
-                    configName);
+            LOG.error(() -> "The resource loader returned no configuration reader. ResourceLoader = {}, configName = {}.",
+                    resourceLoader.getName(), configName);
             throw new IllegalArgumentException("Can't locate " + resourceLoader.getName() + " \"" + configName + "\"");
         }
 
-        LOG.info(() ->
-                        "Parsing configuration properties. ResourceLoader = {}, configName = {}.",
-                resourceLoader.getName(),
-                configName);
+        LOG.info(() -> "Parsing configuration properties. ResourceLoader = {}, configName = {}.", resourceLoader.getName(), configName);
         ConfigurationParser confParser = new ConfigurationParser();
-        m_properties = confParser.getProperties();
+        properties = confParser.getProperties();
+        // 默认配置
         assignDefaults();
         try {
+            // 配置解析
             confParser.parse(configReader);
         } catch (ParseException pex) {
             LOG.warn(() ->
                             "Unable to parse configuration properties. Using default configuration. "
                                     + "ResourceLoader = {}, configName = {}, cause = {}, errorMessage = {}.",
-                    resourceLoader.getName(),
-                    configName,
-                    pex.getCause(),
-                    pex.getMessage());
+                    resourceLoader.getName(), configName, pex.getCause(), pex.getMessage());
         }
     }
 
     @Override
     public void setProperty(String name, String value) {
-        m_properties.setProperty(name, value);
+        properties.setProperty(name, value);
     }
 
     @Override
     public String getProperty(String name) {
-        return m_properties.getProperty(name);
+        return properties.getProperty(name);
     }
 
     @Override
     public String getProperty(String name, String defaultValue) {
-        return m_properties.getProperty(name, defaultValue);
+        return properties.getProperty(name, defaultValue);
     }
 
     @Override
