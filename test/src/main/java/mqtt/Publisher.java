@@ -19,7 +19,7 @@ public class Publisher {
 
     //    private static String ip = "tcp://172.16.32.14:1886";
     private static String ip = "tcp://39.102.113.135:1883";
-//    private static String ip = "tcp://localhost:1883";
+//    private static String ip = "tcp://localhost:1884";
 
     public static void main(final String[] args) {
 

@@ -30,6 +30,8 @@ import java.util.List;
 import static io.moquette.spi.impl.Utils.messageId;
 
 /**
+ * mqtt消息日志器（使用默认的日志框架输出），集成自双工通道处理器
+ *
  * @author andrea
  */
 @Sharable
@@ -37,6 +39,12 @@ public class MQTTMessageLogger extends ChannelDuplexHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(MQTTMessageLogger.class);
 
+    /**
+     * 读取数据
+     *
+     * @param ctx
+     * @param message
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object message) {
         logMQTTMessage(ctx, message, "C->B");
@@ -87,6 +95,12 @@ public class MQTTMessageLogger extends ChannelDuplexHandler {
         }
     }
 
+    /**
+     * 链接关闭
+     *
+     * @param ctx
+     * @throws Exception
+     */
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         String clientID = NettyUtils.clientID(ctx.channel());
@@ -96,6 +110,14 @@ public class MQTTMessageLogger extends ChannelDuplexHandler {
         ctx.fireChannelInactive();
     }
 
+    /**
+     * 写入数据
+     *
+     * @param ctx
+     * @param msg
+     * @param promise
+     * @throws Exception
+     */
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         logMQTTMessage(ctx, msg, "C<-B");

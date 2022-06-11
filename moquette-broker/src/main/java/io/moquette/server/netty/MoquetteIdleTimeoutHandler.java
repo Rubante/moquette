@@ -40,9 +40,7 @@ class MoquetteIdleTimeoutHandler extends ChannelDuplexHandler {
                 ctx.close();
             }
         } else {
-            LOG.debug(() ->
-                            "Firing Netty event. MqttClientId = {}, eventClass = {}.",
-                    NettyUtils.clientID(ctx.channel()),
+            LOG.debug(() -> "Firing Netty event. MqttClientId = {}, eventClass = {}.", NettyUtils.clientID(ctx.channel()),
                     evt.getClass().getName());
 
             super.userEventTriggered(ctx, evt);

@@ -18,6 +18,8 @@ package io.moquette.spi.impl;
 
 import io.moquette.BrokerConstants;
 import io.moquette.interception.InterceptHandler;
+import io.moquette.log.Logger;
+import io.moquette.log.LoggerFactory;
 import io.moquette.server.ConnectionDescriptorStore;
 import io.moquette.server.Server;
 import io.moquette.server.config.IConfig;
@@ -31,8 +33,6 @@ import io.moquette.spi.impl.subscriptions.Subscription;
 import io.moquette.spi.impl.subscriptions.SubscriptionsDirectory;
 import io.moquette.spi.security.IAuthenticator;
 import io.moquette.spi.security.IAuthorizator;
-import io.moquette.log.Logger;
-import io.moquette.log.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,7 +48,7 @@ public class ProtocolProcessorBootstrapper {
     private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessorBootstrapper.class);
     public static final String MAPDB_STORE_CLASS = "io.moquette.persistence.memory.MemoryStorageService";
 
-    private ISessionsStore m_sessionsStore;
+    private ISessionsStore sessionsStore;
 
     private ISubscriptionsStore subscriptionsStore;
 
@@ -92,22 +92,17 @@ public class ProtocolProcessorBootstrapper {
                                   IAuthenticator authenticator, IAuthorizator authorizator, Server server) {
         IMessagesStore messagesStore;
         LOG.info(() -> "Initializing messages and sessions stores...");
+        // 默认使用内存存储
         String storageClassName = props.getProperty(BrokerConstants.STORAGE_CLASS_NAME, MAPDB_STORE_CLASS);
         if (storageClassName == null || storageClassName.isEmpty()) {
             LOG.error(() -> "storage_class property not defined");
             throw new IllegalArgumentException("Can't start a valid persistence layer");
         }
-        final IStore store = loadClass(storageClassName, IStore.class, IConfig.class, props);
+        IStore store = loadClass(storageClassName, IStore.class, IConfig.class, props);
         messagesStore = store.messagesStore();
-        m_sessionsStore = store.sessionsStore();
-        this.subscriptionsStore = m_sessionsStore.subscriptionStore();
-        storeShutdown = new Runnable() {
-
-            @Override
-            public void run() {
-                store.close();
-            }
-        };
+        sessionsStore = store.sessionsStore();
+        this.subscriptionsStore = sessionsStore.subscriptionStore();
+        storeShutdown = () -> store.close();
 
         LOG.info(() -> "Configuring message interceptors...");
 
@@ -123,7 +118,7 @@ public class ProtocolProcessorBootstrapper {
 
         LOG.info(() -> "Initializing subscriptions store...");
         SubscriptionsDirectory subscriptions = new SubscriptionsDirectory();
-        subscriptions.init(m_sessionsStore);
+        subscriptions.init(sessionsStore);
 
         LOG.info(() -> "Configuring MQTT authenticator...");
         String authenticatorClassName = props.getProperty(BrokerConstants.AUTHENTICATOR_CLASS_NAME, "");
@@ -149,6 +144,7 @@ public class ProtocolProcessorBootstrapper {
             authorizator = loadClass(authorizatorClassName, IAuthorizator.class, IConfig.class, props);
         }
 
+        // 没有认证配置时，使用acl配置文件控制
         if (authorizator == null) {
             String aclFilePath = props.getProperty(BrokerConstants.ACL_FILE_PROPERTY_NAME, "");
             if (aclFilePath != null && !aclFilePath.isEmpty()) {
@@ -166,19 +162,30 @@ public class ProtocolProcessorBootstrapper {
         }
 
         LOG.info(() -> "Initializing connection descriptor store...");
-        connectionDescriptors = new ConnectionDescriptorStore(m_sessionsStore);
+        connectionDescriptors = new ConnectionDescriptorStore(sessionsStore);
 
         LOG.info(() -> "Initializing MQTT protocol processor...");
         boolean allowAnonymous = Boolean
                 .parseBoolean(props.getProperty(BrokerConstants.ALLOW_ANONYMOUS_PROPERTY_NAME, "true"));
         boolean allowZeroByteClientId = Boolean
                 .parseBoolean(props.getProperty(BrokerConstants.ALLOW_ZERO_BYTE_CLIENT_ID_PROPERTY_NAME, "false"));
-        m_processor.init(connectionDescriptors, subscriptions, messagesStore, m_sessionsStore, authenticator,
+        m_processor.init(connectionDescriptors, subscriptions, messagesStore, sessionsStore, authenticator,
                 allowAnonymous, allowZeroByteClientId, authorizator, interceptor,
                 props.getProperty(BrokerConstants.PORT_PROPERTY_NAME));
         return m_processor;
     }
 
+    /**
+     * 加载IStore的实现类：默认加载MemoryStorageService
+     *
+     * @param className
+     * @param intrface
+     * @param constructorArgClass
+     * @param props
+     * @param <T>
+     * @param <U>
+     * @return
+     */
     @SuppressWarnings("unchecked")
     private <T, U> T loadClass(String className, Class<T> intrface, Class<U> constructorArgClass, U props) {
         T instance = null;
@@ -244,7 +251,7 @@ public class ProtocolProcessorBootstrapper {
     }
 
     public ISessionsStore getSessionsStore() {
-        return m_sessionsStore;
+        return sessionsStore;
     }
 
     public List<Subscription> getSubscriptions() {

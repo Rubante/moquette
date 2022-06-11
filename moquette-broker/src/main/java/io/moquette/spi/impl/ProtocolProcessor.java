@@ -37,10 +37,7 @@ import io.netty.handler.codec.mqtt.*;
 import io.netty.handler.timeout.IdleStateHandler;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -61,6 +58,11 @@ import static io.netty.handler.codec.mqtt.MqttQoS.*;
  */
 public class ProtocolProcessor {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessor.class);
+
+    /**
+     * 遗嘱消息
+     */
     static final class WillMessage {
 
         private final String topic;
@@ -96,7 +98,7 @@ public class ProtocolProcessor {
         STORED, VERIFIED
     }
 
-    private class RunningSubscription {
+    private static class RunningSubscription {
 
         final String clientID;
         final long packetId;
@@ -115,8 +117,7 @@ public class ProtocolProcessor {
 
             RunningSubscription that = (RunningSubscription) o;
 
-            return packetId == that.packetId
-                    && (clientID != null ? clientID.equals(that.clientID) : that.clientID == null);
+            return packetId == that.packetId && Objects.equals(clientID, that.clientID);
         }
 
         @Override
@@ -127,8 +128,6 @@ public class ProtocolProcessor {
         }
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(ProtocolProcessor.class);
-
     protected ConnectionDescriptorStore connectionDescriptors;
     protected ConcurrentMap<RunningSubscription, SubscriptionState> subscriptionInCourse;
 
@@ -136,7 +135,7 @@ public class ProtocolProcessor {
     private ISubscriptionsStore subscriptionStore;
     private boolean allowAnonymous;
     private boolean allowZeroByteClientId;
-    private IAuthorizator m_authorizator;
+    private IAuthorizator authorizator;
 
     private IMessagesStore m_messagesStore;
 
@@ -199,7 +198,7 @@ public class ProtocolProcessor {
         this.subscriptions = subscriptions;
         this.allowAnonymous = allowAnonymous;
         this.allowZeroByteClientId = allowZeroByteClientId;
-        m_authorizator = authorizator;
+        this.authorizator = authorizator;
         LOG.debug(() -> "Initial subscriptions tree={}", subscriptions.dumpTree());
 
         m_authenticator = authenticator;
@@ -213,17 +212,23 @@ public class ProtocolProcessor {
                 subscriptions);
 
         LOG.info(() -> "Initializing QoS publish handlers...");
-        this.qos0PublishHandler = new Qos0PublishHandler(m_authorizator, m_messagesStore, m_interceptor,
+        this.qos0PublishHandler = new Qos0PublishHandler(authorizator, m_messagesStore, m_interceptor,
                 this.messagesPublisher);
-        this.qos1PublishHandler = new Qos1PublishHandler(m_authorizator, m_messagesStore, m_interceptor,
+        this.qos1PublishHandler = new Qos1PublishHandler(authorizator, m_messagesStore, m_interceptor,
                 this.connectionDescriptors, this.messagesPublisher);
-        this.qos2PublishHandler = new Qos2PublishHandler(m_authorizator, subscriptions, m_messagesStore, m_interceptor,
+        this.qos2PublishHandler = new Qos2PublishHandler(authorizator, subscriptions, m_messagesStore, m_interceptor,
                 this.connectionDescriptors, m_sessionsStore, this.messagesPublisher);
 
         LOG.info(() -> "Initializing internal republisher...");
         this.internalRepublisher = new InternalRepublisher(messageSender);
     }
 
+    /**
+     * 处理链接进入
+     *
+     * @param channel
+     * @param msg
+     */
     public void processConnect(Channel channel, MqttConnectMessage msg) {
         MqttConnectPayload payload = msg.payload();
         String clientId = payload.clientIdentifier();
@@ -278,7 +283,7 @@ public class ProtocolProcessor {
 
         m_interceptor.notifyClientConnected(msg);
 
-        final ClientSession clientSession = createOrLoadClientSession(descriptor, msg, clientId);
+        ClientSession clientSession = createOrLoadClientSession(descriptor, msg, clientId);
         if (clientSession == null) {
             channel.close();
             return;
@@ -288,7 +293,7 @@ public class ProtocolProcessor {
             channel.close();
             return;
         }
-        final boolean success = descriptor.assignState(MESSAGES_REPUBLISHED, ESTABLISHED);
+        boolean success = descriptor.assignState(MESSAGES_REPUBLISHED, ESTABLISHED);
         if (!success) {
             channel.close();
         }
@@ -490,6 +495,7 @@ public class ProtocolProcessor {
 
     /**
      * 处理发送过来的消息，分等级：至少一次，最多一次，只能一次
+     *
      * @param channel
      * @param msg
      */
@@ -512,6 +518,8 @@ public class ProtocolProcessor {
                 LOG.error(() -> "Unknown QoS-Type:{}", qos);
                 break;
         }
+        // 回收内存
+        msg.release();
     }
 
     /**
@@ -617,11 +625,17 @@ public class ProtocolProcessor {
                 .notifyMessageAcknowledged(new InterceptAcknowledgedMessage(inflightMsg, topic, username, messageID));
     }
 
+    /**
+     * 处理链接断开
+     *
+     * @param channel
+     * @throws InterruptedException
+     */
     public void processDisconnect(Channel channel) throws InterruptedException {
-        final String clientID = NettyUtils.clientID(channel);
+        String clientID = NettyUtils.clientID(channel);
         LOG.info(() -> "Processing DISCONNECT message. CId={}", clientID);
         channel.flush();
-        final ConnectionDescriptor existingDescriptor = this.connectionDescriptors.getConnection(clientID);
+        ConnectionDescriptor existingDescriptor = this.connectionDescriptors.getConnection(clientID);
         if (existingDescriptor == null) {
             // another client with same ID removed the descriptor, we must exit
             channel.close();
@@ -840,7 +854,7 @@ public class ProtocolProcessor {
         final int messageId = messageId(msg);
         for (MqttTopicSubscription req : msg.payload().topicSubscriptions()) {
             Topic topic = new Topic(req.topicName());
-            if (!m_authorizator.canRead(topic, username, clientSession.clientID)) {
+            if (!authorizator.canRead(topic, username, clientSession.clientID)) {
                 // send SUBACK with 0x80, the user hasn't credentials to read the topic
                 LOG.error(() -> "Client does not have read permissions on the topic CId={}, username={}, messageId={}, " +
                         "topic={}", clientID, username, messageId, topic);
@@ -933,5 +947,13 @@ public class ProtocolProcessor {
 
     public ISessionsStore getSessionsStore() {
         return m_sessionsStore;
+    }
+
+    public ConnectionDescriptorStore getConnectionDescriptors() {
+        return connectionDescriptors;
+    }
+
+    public ISubscriptionsStore getSubscriptionStore() {
+        return subscriptionStore;
     }
 }

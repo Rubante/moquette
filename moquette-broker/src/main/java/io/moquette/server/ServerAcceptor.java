@@ -17,10 +17,14 @@
 package io.moquette.server;
 
 import java.io.IOException;
+
 import io.moquette.server.config.IConfig;
 import io.moquette.spi.impl.ProtocolProcessor;
 import io.moquette.spi.security.ISslContextCreator;
 
+/**
+ * 服务接受器
+ */
 public interface ServerAcceptor {
 
     void initialize(ProtocolProcessor processor, IConfig props, ISslContextCreator sslCtxCreator) throws IOException;

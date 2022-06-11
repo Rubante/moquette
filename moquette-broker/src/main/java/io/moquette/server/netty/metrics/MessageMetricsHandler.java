@@ -27,10 +27,10 @@ public class MessageMetricsHandler extends ChannelDuplexHandler {
 
     private static final AttributeKey<MessageMetrics> ATTR_KEY_METRICS = AttributeKey.valueOf("MessageMetrics");
 
-    private MessageMetricsCollector m_collector;
+    private MessageMetricsCollector collector;
 
     public MessageMetricsHandler(MessageMetricsCollector collector) {
-        m_collector = collector;
+        this.collector = collector;
     }
 
     @Override
@@ -58,8 +58,8 @@ public class MessageMetricsHandler extends ChannelDuplexHandler {
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         MessageMetrics metrics = ctx.channel().attr(ATTR_KEY_METRICS).get();
-        m_collector.sumReadMessages(metrics.messagesRead());
-        m_collector.sumWroteMessages(metrics.messagesWrote());
+        collector.sumReadMessages(metrics.messagesRead());
+        collector.sumWroteMessages(metrics.messagesWrote());
         super.close(ctx, promise);
     }
 

@@ -16,24 +16,32 @@
 
 package io.moquette.server.netty.metrics;
 
+/**
+ * 消息度量指标
+ */
 public class MessageMetrics {
-
-    private long m_messagesRead;
-    private long m_messageWrote;
+    /**
+     * 读消息的数量
+     */
+    private long messagesRead;
+    /**
+     * 写消息的数量
+     */
+    private long messageWrote;
 
     void incrementRead(long numMessages) {
-        m_messagesRead += numMessages;
+        messagesRead += numMessages;
     }
 
     void incrementWrote(long numMessages) {
-        m_messageWrote += numMessages;
+        messageWrote += numMessages;
     }
 
     public long messagesRead() {
-        return m_messagesRead;
+        return messagesRead;
     }
 
     public long messagesWrote() {
-        return m_messageWrote;
+        return messageWrote;
     }
 }

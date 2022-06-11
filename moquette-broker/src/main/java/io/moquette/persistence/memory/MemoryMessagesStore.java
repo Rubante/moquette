@@ -22,13 +22,23 @@ import io.moquette.spi.IMatchingCondition;
 import io.moquette.spi.IMessagesStore;
 import io.moquette.spi.impl.subscriptions.Topic;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * 内存信息存储
+ */
 public class MemoryMessagesStore implements IMessagesStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(MemoryMessagesStore.class);
 
-    private Map<Topic, StoredMessage> m_retainedStore = new HashMap<>();
+    /**
+     * 保留的消息
+     */
+    private Map<Topic, StoredMessage> retainedStore = new ConcurrentHashMap<>();
 
     MemoryMessagesStore() {
     }
@@ -44,27 +54,25 @@ public class MemoryMessagesStore implements IMessagesStore {
         if (storedMessage.getClientID() == null) {
             throw new IllegalArgumentException("Message to be persisted must have a not null client ID");
         }
-        m_retainedStore.put(topic, storedMessage);
+        retainedStore.put(topic, storedMessage);
     }
 
     @Override
     public Collection<StoredMessage> searchMatching(IMatchingCondition condition) {
-        LOG.debug(() -> "searchMatching scanning all retained messages, presents are {}", m_retainedStore.size());
+        LOG.debug(() -> "searchMatching scanning all retained messages, presents are {}", retainedStore.size());
 
         List<StoredMessage> results = new ArrayList<>();
 
-        for (Map.Entry<Topic, StoredMessage> entry : m_retainedStore.entrySet()) {
-            StoredMessage storedMsg = entry.getValue();
-            if (condition.match(entry.getKey())) {
-                results.add(storedMsg);
+        for (Topic topic : retainedStore.keySet()) {
+            if (condition.match(topic)) {
+                results.add(retainedStore.get(topic));
             }
         }
-
         return results;
     }
 
     @Override
     public void cleanRetained(Topic topic) {
-        m_retainedStore.remove(topic);
+        retainedStore.remove(topic);
     }
 }

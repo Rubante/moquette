@@ -22,7 +22,7 @@ public class Subscribe {
     //private static String ip = "tcp://139.199.189.214:1883";
     private static String ip = "tcp://39.102.113.135:1883";
 
-    //    private static String ip = "tcp://localhost:1883";
+//        private static String ip = "tcp://localhost:1884";
     public static void main(String[] args) {
         Subscribe subscribe = new Subscribe();
         subscribe.start("1");
@@ -33,7 +33,7 @@ public class Subscribe {
      */
     private void start(String prefix) {
 
-        for (int i = 10000; i < 11000; i++) {
+        for (int i = 10000; i < 15000; i++) {
 
             final String clientId = prefix + "-" + i;
             Runnable thread = new Runnable() {
@@ -46,7 +46,7 @@ public class Subscribe {
 
             new Thread(thread).start();
             try {
-                Thread.sleep(10);
+                Thread.sleep(100);
             } catch (InterruptedException ex) {
                 logger.error("sleep error!", ex);
             }
@@ -73,7 +73,8 @@ public class Subscribe {
             connOpts.setUserName("client");
             connOpts.setPassword("123456".toCharArray());
             connOpts.setCleanSession(false);
-            connOpts.setKeepAliveInterval(60);
+            connOpts.setKeepAliveInterval(90);
+            connOpts.setConnectionTimeout(60);
 
             AtomicInteger subcounter = new AtomicInteger(0);
             ClientCallback clientCallback = new ClientCallback();

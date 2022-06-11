@@ -24,14 +24,17 @@ import io.netty.channel.ChannelPromise;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
 
+/**
+ * 字节度量指标处理器
+ */
 public class BytesMetricsHandler extends ChannelDuplexHandler {
 
     private static final AttributeKey<BytesMetrics> ATTR_KEY_METRICS = AttributeKey.valueOf("BytesMetrics");
 
-    private BytesMetricsCollector m_collector;
+    private BytesMetricsCollector collector;
 
     public BytesMetricsHandler(BytesMetricsCollector collector) {
-        m_collector = collector;
+        this.collector = collector;
     }
 
     @Override
@@ -59,8 +62,8 @@ public class BytesMetricsHandler extends ChannelDuplexHandler {
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
         BytesMetrics metrics = ctx.channel().attr(ATTR_KEY_METRICS).get();
-        m_collector.sumReadBytes(metrics.readBytes());
-        m_collector.sumWroteBytes(metrics.wroteBytes());
+        collector.sumReadBytes(metrics.readBytes());
+        collector.sumWroteBytes(metrics.wroteBytes());
         super.close(ctx, promise);
     }
 

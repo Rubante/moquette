@@ -33,25 +33,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * 内存会话存储器
+ */
 public class MemorySessionStore implements ISessionsStore, ISubscriptionsStore {
 
     private static final Logger LOG = LoggerFactory.getLogger(MemorySessionStore.class);
-
-    class Session {
-        final String clientID;
-        final ClientSession clientSession;
-        final Map<Topic, Subscription> subscriptions = new ConcurrentHashMap<>();
-        final AtomicReference<PersistentSession> persistentSession = new AtomicReference<>(null);
-        final BlockingQueue<StoredMessage> queue = new ArrayBlockingQueue<>(Constants.MAX_MESSAGE_QUEUE);
-        final Map<Integer, StoredMessage> secondPhaseStore = new ConcurrentHashMap<>();
-        final Map<Integer, StoredMessage> outboundFlightMessages = new ConcurrentHashMap<>();
-        final Map<Integer, StoredMessage> inboundFlightMessages = new ConcurrentHashMap<>();
-
-        Session(String clientID, ClientSession clientSession) {
-            this.clientID = clientID;
-            this.clientSession = clientSession;
-        }
-    }
 
     private final Map<String, Session> sessions = new ConcurrentHashMap<>();
 
@@ -83,6 +70,11 @@ public class MemorySessionStore implements ISessionsStore, ISubscriptionsStore {
         return this;
     }
 
+    /**
+     * 新的订阅
+     *
+     * @param newSubscription
+     */
     @Override
     public void addNewSubscription(Subscription newSubscription) {
         final String clientID = newSubscription.getClientId();
@@ -355,5 +347,24 @@ public class MemorySessionStore implements ISessionsStore, ISubscriptionsStore {
         // TODO this missing last step breaks the
         // junit test
         //sessions.remove(clientID);
+    }
+
+    /**
+     * 链接会话
+     */
+    class Session {
+        final String clientID;
+        final ClientSession clientSession;
+        final Map<Topic, Subscription> subscriptions = new ConcurrentHashMap<>();
+        final AtomicReference<PersistentSession> persistentSession = new AtomicReference<>(null);
+        final BlockingQueue<StoredMessage> queue = new ArrayBlockingQueue<>(Constants.MAX_MESSAGE_QUEUE);
+        final Map<Integer, StoredMessage> secondPhaseStore = new ConcurrentHashMap<>();
+        final Map<Integer, StoredMessage> outboundFlightMessages = new ConcurrentHashMap<>();
+        final Map<Integer, StoredMessage> inboundFlightMessages = new ConcurrentHashMap<>();
+
+        Session(String clientID, ClientSession clientSession) {
+            this.clientID = clientID;
+            this.clientSession = clientSession;
+        }
     }
 }

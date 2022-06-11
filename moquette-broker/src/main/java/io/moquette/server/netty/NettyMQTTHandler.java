@@ -16,13 +16,13 @@
 
 package io.moquette.server.netty;
 
+import io.moquette.log.Logger;
+import io.moquette.log.LoggerFactory;
 import io.moquette.spi.impl.ProtocolProcessor;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.*;
-import io.moquette.log.Logger;
-import io.moquette.log.LoggerFactory;
 
 import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 
@@ -30,12 +30,18 @@ import static io.netty.handler.codec.mqtt.MqttQoS.AT_MOST_ONCE;
 public class NettyMQTTHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger LOG = LoggerFactory.getLogger(NettyMQTTHandler.class);
-    private final ProtocolProcessor m_processor;
+    private final ProtocolProcessor processor;
 
     public NettyMQTTHandler(ProtocolProcessor processor) {
-        m_processor = processor;
+        this.processor = processor;
     }
 
+    /**
+     * 按类型处理消息
+     *
+     * @param ctx
+     * @param message
+     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object message) {
         MqttMessage msg = (MqttMessage) message;
@@ -45,31 +51,31 @@ public class NettyMQTTHandler extends ChannelInboundHandlerAdapter {
         try {
             switch (messageType) {
                 case CONNECT:
-                    m_processor.processConnect(ctx.channel(), (MqttConnectMessage) msg);
+                    processor.processConnect(ctx.channel(), (MqttConnectMessage) msg);
                     break;
                 case SUBSCRIBE:
-                    m_processor.processSubscribe(ctx.channel(), (MqttSubscribeMessage) msg);
+                    processor.processSubscribe(ctx.channel(), (MqttSubscribeMessage) msg);
                     break;
                 case UNSUBSCRIBE:
-                    m_processor.processUnsubscribe(ctx.channel(), (MqttUnsubscribeMessage) msg);
+                    processor.processUnsubscribe(ctx.channel(), (MqttUnsubscribeMessage) msg);
                     break;
                 case PUBLISH:
-                    m_processor.processPublish(ctx.channel(), (MqttPublishMessage) msg);
+                    processor.processPublish(ctx.channel(), (MqttPublishMessage) msg);
                     break;
                 case PUBREC:
-                    m_processor.processPubRec(ctx.channel(), msg);
+                    processor.processPubRec(ctx.channel(), msg);
                     break;
                 case PUBCOMP:
-                    m_processor.processPubComp(ctx.channel(), msg);
+                    processor.processPubComp(ctx.channel(), msg);
                     break;
                 case PUBREL:
-                    m_processor.processPubRel(ctx.channel(), msg);
+                    processor.processPubRel(ctx.channel(), msg);
                     break;
                 case DISCONNECT:
-                    m_processor.processDisconnect(ctx.channel());
+                    processor.processDisconnect(ctx.channel());
                     break;
                 case PUBACK:
-                    m_processor.processPubAck(ctx.channel(), (MqttPubAckMessage) msg);
+                    processor.processPubAck(ctx.channel(), (MqttPubAckMessage) msg);
                     break;
                 case PINGREQ:
                     MqttFixedHeader pingHeader = new MqttFixedHeader(
@@ -93,17 +99,17 @@ public class NettyMQTTHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         String clientID = NettyUtils.clientID(ctx.channel());
         if (clientID != null && !clientID.isEmpty()) {
             LOG.info(() -> "Notifying connection lost event. MqttClientId = {}.", clientID);
-            m_processor.processConnectionLost(clientID, ctx.channel());
+            processor.processConnectionLost(clientID, ctx.channel());
         }
         ctx.close();
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         LOG.error(() ->
                         "An unexpected exception was caught while processing MQTT message. "
                                 + "Closing Netty channel. MqttClientId = {}, cause = {}, errorMessage = {}.",
@@ -114,9 +120,9 @@ public class NettyMQTTHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
+    public void channelWritabilityChanged(ChannelHandlerContext ctx) {
         if (ctx.channel().isWritable()) {
-            m_processor.notifyChannelWritable(ctx.channel());
+            processor.notifyChannelWritable(ctx.channel());
         }
         ctx.fireChannelWritabilityChanged();
     }

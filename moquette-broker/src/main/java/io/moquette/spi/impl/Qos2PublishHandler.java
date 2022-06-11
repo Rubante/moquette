@@ -100,7 +100,6 @@ class Qos2PublishHandler extends QosPublishHandler {
         // 修改publish消息，slice出的ByteBuf对象，原文中存在内存泄漏
         MoquetteMessage moquetteMessage = new MoquetteMessage(msg.fixedHeader(), msg.variableHeader(), msg.content());
         m_interceptor.notifyTopicPublished(moquetteMessage, clientID, username);
-        msg.content().release();
     }
 
     /**

@@ -48,7 +48,7 @@ public class Server {
 
     private static final Logger LOG = LoggerFactory.getLogger(Server.class);
 
-    private ServerAcceptor m_acceptor;
+    private ServerAcceptor acceptor;
 
     /**
      * 是否已经完成初始化
@@ -65,7 +65,7 @@ public class Server {
     private ScheduledExecutorService scheduler;
 
     public static void main(String[] args) throws IOException {
-        final Server server = new Server();
+        Server server = new Server();
         server.startServer();
         LOG.info(() -> "Server started, version 0.10.8-SNAPSHOT");
         // Bind a shutdown hook
@@ -79,7 +79,6 @@ public class Server {
      * @throws IOException IO异常.
      */
     public void startServer() throws IOException {
-
         // 获取默认配置文件路径
         File defaultConfigurationFile = defaultConfigFile();
 
@@ -191,8 +190,8 @@ public class Server {
         }
 
         LOG.info(() -> "Binding server to the configured ports");
-        m_acceptor = new NettyAcceptor();
-        m_acceptor.initialize(processor, config, sslCtxCreator);
+        acceptor = new NettyAcceptor();
+        acceptor.initialize(processor, config, sslCtxCreator);
         this.processor = processor;
 
         LOG.info(() -> "Moquette server has been initialized successfully");
@@ -222,9 +221,12 @@ public class Server {
         processor.internalPublish(msg, clientId);
     }
 
+    /**
+     * 停止服务器
+     */
     public void stopServer() {
         LOG.info(() -> "Unbinding server from the configured ports");
-        m_acceptor.close();
+        acceptor.close();
         LOG.trace(() -> "Stopping MQTT protocol processor");
         processorBootstrapper.shutdown();
         initialized = false;

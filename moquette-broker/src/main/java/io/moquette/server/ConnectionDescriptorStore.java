@@ -48,7 +48,7 @@ public class ConnectionDescriptorStore implements IConnectionsManager {
     }
 
     public boolean sendMessage(MqttMessage message, Integer messageID, String clientID) {
-        final MqttMessageType messageType = message.fixedHeader().messageType();
+        MqttMessageType messageType = message.fixedHeader().messageType();
         try {
             if (messageID != null) {
                 LOG.info(() -> "Sending {} message CId=<{}>, messageId={}", messageType, clientID, messageID);
@@ -77,7 +77,7 @@ public class ConnectionDescriptorStore implements IConnectionsManager {
             if (messageID != null) {
                 errorMsg += ", messageId=" + messageID;
             }
-            final String msg = errorMsg;
+            String msg = errorMsg;
             LOG.error(() -> msg, e);
             return false;
         }
@@ -118,6 +118,7 @@ public class ConnectionDescriptorStore implements IConnectionsManager {
                     "closeImmediately={}", clientID, closeImmediately);
             return false;
         }
+        // TODO 关闭了，不需要remove，不泄露么？
         if (closeImmediately) {
             descriptor.abort();
             return true;

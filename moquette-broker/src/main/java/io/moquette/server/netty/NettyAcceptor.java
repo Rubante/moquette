@@ -17,9 +17,12 @@
 package io.moquette.server.netty;
 
 import io.moquette.BrokerConstants;
+import io.moquette.log.Logger;
+import io.moquette.log.LoggerFactory;
 import io.moquette.server.ServerAcceptor;
 import io.moquette.server.config.IConfig;
 import io.moquette.server.netty.metrics.*;
+import io.moquette.server.netty.monitor.SimpleHttpServerHandler;
 import io.moquette.spi.impl.ProtocolProcessor;
 import io.moquette.spi.security.ISslContextCreator;
 import io.netty.bootstrap.ServerBootstrap;
@@ -44,8 +47,6 @@ import io.netty.handler.codec.mqtt.MqttEncoder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.Future;
-import io.moquette.log.Logger;
-import io.moquette.log.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
@@ -55,7 +56,12 @@ import java.util.concurrent.TimeUnit;
 
 import static io.moquette.BrokerConstants.*;
 
+/**
+ * netty接受器
+ */
 public class NettyAcceptor implements ServerAcceptor {
+
+    private static final Logger LOG = LoggerFactory.getLogger(NettyAcceptor.class);
 
     private static final String MQTT_SUBPROTOCOL_CSV_LIST = "mqtt, mqttv3.1, mqttv3.1.1";
 
@@ -91,12 +97,10 @@ public class NettyAcceptor implements ServerAcceptor {
         abstract void init(ChannelPipeline pipeline) throws Exception;
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(NettyAcceptor.class);
-
     EventLoopGroup m_bossGroup;
     EventLoopGroup m_workerGroup;
-    BytesMetricsCollector m_bytesMetricsCollector = new BytesMetricsCollector();
-    MessageMetricsCollector m_metricsCollector = new MessageMetricsCollector();
+    BytesMetricsCollector bytesMetricsCollector = new BytesMetricsCollector();
+    MessageMetricsCollector metricsCollector = new MessageMetricsCollector();
 
     private int nettySoBacklog;
     private boolean nettySoReuseaddr;
@@ -134,10 +138,11 @@ public class NettyAcceptor implements ServerAcceptor {
             channelClass = NioServerSocketChannel.class;
         }
 
-        final NettyMQTTHandler handler = new NettyMQTTHandler(processor);
+        NettyMQTTHandler handler = new NettyMQTTHandler(processor);
 
         initializePlainTCPTransport(handler, props);
         initializeWebSocketTransport(handler, props);
+        initializeHttpTransport(processor, props);
         String sslTcpPortProp = props.getProperty(BrokerConstants.SSL_PORT_PROPERTY_NAME);
         String wssPortProp = props.getProperty(BrokerConstants.WSS_PORT_PROPERTY_NAME);
         if (sslTcpPortProp != null || wssPortProp != null) {
@@ -181,9 +186,15 @@ public class NettyAcceptor implements ServerAcceptor {
         }
     }
 
+    /**
+     * 初始化普通tcp传输
+     *
+     * @param handler
+     * @param props
+     * @throws IOException
+     */
     private void initializePlainTCPTransport(final NettyMQTTHandler handler, IConfig props) throws IOException {
         LOG.info(() -> "Configuring TCP MQTT transport");
-        final MoquetteIdleTimeoutHandler timeoutHandler = new MoquetteIdleTimeoutHandler();
         String host = props.getProperty(BrokerConstants.HOST_PROPERTY_NAME);
         String tcpPortProp = props.getProperty(PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
         if (DISABLED_PORT_BIND.equals(tcpPortProp)) {
@@ -191,24 +202,35 @@ public class NettyAcceptor implements ServerAcceptor {
                     DISABLED_PORT_BIND);
             return;
         }
-        int port = Integer.parseInt(tcpPortProp);
-        initFactory(host, port, "TCP MQTT", new PipelineInitializer() {
+        // 空闲超时处理器
+        MoquetteIdleTimeoutHandler timeoutHandler = new MoquetteIdleTimeoutHandler();
+        initFactory(host, Integer.parseInt(tcpPortProp), "TCP MQTT", new PipelineInitializer() {
 
             @Override
             void init(ChannelPipeline pipeline) {
                 pipeline.addFirst("idleStateHandler", new IdleStateHandler(nettyChannelTimeoutSeconds, 0, 0));
                 pipeline.addAfter("idleStateHandler", "idleEventHandler", timeoutHandler);
                 // pipeline.addLast("logger", new LoggingHandler("Netty", LogLevel.ERROR));
-                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(m_bytesMetricsCollector));
+                // 用于记录收发字节数
+                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(bytesMetricsCollector));
+                // mqtt编解码器
                 pipeline.addLast("decoder", new MqttDecoder());
                 pipeline.addLast("encoder", MqttEncoder.INSTANCE);
-                pipeline.addLast("metrics", new MessageMetricsHandler(m_metricsCollector));
+                // 用于记录收发消息条数
+                pipeline.addLast("metrics", new MessageMetricsHandler(metricsCollector));
                 pipeline.addLast("messageLogger", new MQTTMessageLogger());
                 pipeline.addLast("handler", handler);
             }
         });
     }
 
+    /**
+     * 初始化webSocket
+     *
+     * @param handler
+     * @param props
+     * @throws IOException
+     */
     private void initializeWebSocketTransport(final NettyMQTTHandler handler, IConfig props) throws IOException {
         LOG.info(() -> "Configuring Websocket MQTT transport");
         String webSocketPortProp = props.getProperty(WEB_SOCKET_PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
@@ -235,10 +257,10 @@ public class NettyAcceptor implements ServerAcceptor {
                 pipeline.addLast("bytebuf2wsEncoder", new ByteBufToWebSocketFrameEncoder());
                 pipeline.addFirst("idleStateHandler", new IdleStateHandler(nettyChannelTimeoutSeconds, 0, 0));
                 pipeline.addAfter("idleStateHandler", "idleEventHandler", timeoutHandler);
-                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(m_bytesMetricsCollector));
+                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(bytesMetricsCollector));
                 pipeline.addLast("decoder", new MqttDecoder());
                 pipeline.addLast("encoder", MqttEncoder.INSTANCE);
-                pipeline.addLast("metrics", new MessageMetricsHandler(m_metricsCollector));
+                pipeline.addLast("metrics", new MessageMetricsHandler(metricsCollector));
                 pipeline.addLast("messageLogger", new MQTTMessageLogger());
                 pipeline.addLast("handler", handler);
             }
@@ -271,10 +293,10 @@ public class NettyAcceptor implements ServerAcceptor {
                 pipeline.addFirst("idleStateHandler", new IdleStateHandler(nettyChannelTimeoutSeconds, 0, 0));
                 pipeline.addAfter("idleStateHandler", "idleEventHandler", timeoutHandler);
                 // pipeline.addLast("logger", new LoggingHandler("Netty", LogLevel.ERROR));
-                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(m_bytesMetricsCollector));
+                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(bytesMetricsCollector));
                 pipeline.addLast("decoder", new MqttDecoder());
                 pipeline.addLast("encoder", MqttEncoder.INSTANCE);
-                pipeline.addLast("metrics", new MessageMetricsHandler(m_metricsCollector));
+                pipeline.addLast("metrics", new MessageMetricsHandler(metricsCollector));
                 pipeline.addLast("messageLogger", new MQTTMessageLogger());
                 pipeline.addLast("handler", handler);
             }
@@ -310,12 +332,42 @@ public class NettyAcceptor implements ServerAcceptor {
                 pipeline.addLast("bytebuf2wsEncoder", new ByteBufToWebSocketFrameEncoder());
                 pipeline.addFirst("idleStateHandler", new IdleStateHandler(nettyChannelTimeoutSeconds, 0, 0));
                 pipeline.addAfter("idleStateHandler", "idleEventHandler", timeoutHandler);
-                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(m_bytesMetricsCollector));
+                pipeline.addFirst("bytemetrics", new BytesMetricsHandler(bytesMetricsCollector));
                 pipeline.addLast("decoder", new MqttDecoder());
                 pipeline.addLast("encoder", MqttEncoder.INSTANCE);
-                pipeline.addLast("metrics", new MessageMetricsHandler(m_metricsCollector));
+                pipeline.addLast("metrics", new MessageMetricsHandler(metricsCollector));
                 pipeline.addLast("messageLogger", new MQTTMessageLogger());
                 pipeline.addLast("handler", handler);
+            }
+        });
+    }
+
+    /**
+     * 初始化HTTP服务，用于显示统计信息
+     *
+     * @param props
+     * @throws IOException
+     */
+    private void initializeHttpTransport(ProtocolProcessor processor, IConfig props) throws IOException {
+        LOG.info(() -> "Configuring HTTP transport");
+        String httpPortProp = props.getProperty(HTTP_PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
+        if (DISABLED_PORT_BIND.equals(httpPortProp)) {
+            // Do nothing no WebSocket configured
+            LOG.info(() -> "Property {} has been setted to {}. HTTP will be disabled",
+                    BrokerConstants.HTTP_PORT_PROPERTY_NAME, DISABLED_PORT_BIND);
+            return;
+        }
+        int port = Integer.parseInt(httpPortProp);
+
+        String host = props.getProperty(BrokerConstants.HOST_PROPERTY_NAME);
+        initFactory(host, port, "HTTP Server", new PipelineInitializer() {
+
+            @Override
+            void init(ChannelPipeline pipeline) {
+                pipeline.addLast(new HttpRequestDecoder());
+                pipeline.addLast(new HttpResponseEncoder());
+                pipeline.addLast(new HttpObjectAggregator(512 * 1024));
+                pipeline.addLast(new SimpleHttpServerHandler(metricsCollector, processor));
             }
         });
     }
@@ -352,12 +404,12 @@ public class NettyAcceptor implements ServerAcceptor {
         }
 
         LOG.info(() -> "Collecting message metrics...");
-        MessageMetrics metrics = m_metricsCollector.computeMetrics();
+        MessageMetrics metrics = metricsCollector.computeMetrics();
         LOG.info(() -> "Metrics have been collected. Read messages={}, written messages={}", metrics.messagesRead(),
                 metrics.messagesWrote());
 
         LOG.info(() -> "Collecting bytes metrics...");
-        BytesMetrics bytesMetrics = m_bytesMetricsCollector.computeMetrics();
+        BytesMetrics bytesMetrics = bytesMetricsCollector.computeMetrics();
         LOG.info(() -> "Bytes metrics have been collected. Read bytes={}, written bytes={}", bytesMetrics.readBytes(),
                 bytesMetrics.wroteBytes());
     }

@@ -19,11 +19,18 @@ package io.moquette.server.netty.metrics;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
+ * 从各种管道中收集度量指标
  * Collects all the metrics from the various pipeline.
  */
 public class MessageMetricsCollector {
 
+    /**
+     * 读消息的总数量
+     */
     private AtomicLong readMsgs = new AtomicLong();
+    /**
+     * 写入消息的总数量
+     */
     private AtomicLong wroteMsgs = new AtomicLong();
 
     public MessageMetrics computeMetrics() {
